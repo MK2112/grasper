@@ -1,10 +1,13 @@
 package com.mk2112.businesslogic.controller
 
-import sun.nio.cs.UTF_8
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileInputStream
+import java.io.InputStreamReader
 import java.lang.System.exit
 import java.lang.Thread.sleep
-import java.nio.channels.AsynchronousFileChannel.open
+import java.nio.charset.StandardCharsets
+
 
 class GrasperController: AbstractGrasperController {
 
@@ -28,23 +31,30 @@ class GrasperController: AbstractGrasperController {
 
         val delay = getDelay(wpm)
 
-        clearScreen("java -jar grasper.jar " + filePath + " " + wpm)
+        clearScreen()
 
         File(filePath).forEachLine {
             val words = it.split(" ")
             for (word in words) {
-                val printWord = writeBuffer(word) + word
+                val printWord = writeBuffer(word) + word.replace(" ", "").replace("\t", "")
                 print(printWord)
                 sleep(delay)
-                clearScreen(printWord)
+                clearScreen()
             }
         }
     }
 
-    fun clearScreen(printWord: String) {
-        for (char in printWord) {
-            print("\b")
+    fun setCodePage() {
+        val os = System.getProperty("os.name")
+        if (os.contains("Windows")) {
+            ProcessBuilder("cmd", "/c", "CHCP 65001").inheritIO().start().waitFor()
         }
+    }
+
+    fun clearScreen() {
+        val os = System.getProperty("os.name")
+        if (os.contains("Windows")) ProcessBuilder("cmd", "/c", "cls").inheritIO().start()
+            .waitFor() else Runtime.getRuntime().exec("clear")
     }
 
     fun getDelay(wpm: Int): Long {
@@ -52,7 +62,7 @@ class GrasperController: AbstractGrasperController {
     }
 
     fun writeBuffer(word: String): String {
-        val blank = "                    "
+        val blank = "\n\n\n\n\n\n\n\n\n\n\n\n\n                                                           "
         return blank.substring(0, blank.length - word.length / 2)
     }
 }
