@@ -1,13 +1,10 @@
 package com.mk2112.businesslogic.controller
 
-import java.io.BufferedReader
+import org.apache.pdfbox.pdmodel.PDDocument
+import org.apache.pdfbox.text.PDFTextStripper
 import java.io.File
-import java.io.FileInputStream
-import java.io.InputStreamReader
 import java.lang.System.exit
 import java.lang.Thread.sleep
-import java.nio.charset.StandardCharsets
-
 
 class GrasperController: AbstractGrasperController {
 
@@ -20,17 +17,33 @@ class GrasperController: AbstractGrasperController {
         val wpm = Integer.parseInt(args[1])
 
         if (args[0].lowercase().endsWith(".pdf")) {
-            //processPDF(filePath, wpm)
+            processPDF(filePath, wpm)
         } else if (args[0].lowercase().endsWith(".txt")) {
             processTXT(filePath, wpm)
         }
 
     }
 
-    fun processTXT (filePath: String, wpm: Int) {
-
+    fun processPDF(filePath: String, wpm: Int) {
         val delay = getDelay(wpm)
+        clearScreen()
 
+        val document = PDDocument.load(File(filePath))
+        if (!document.isEncrypted) {
+            val stripper = PDFTextStripper()
+            val words = stripper.getText(document).replace("\n", "").replace("\t", " ").split(" ")
+            for (word in words) {
+                val printWord = writeBuffer(word) + word.replace(" ", "")
+                print(printWord)
+                sleep(delay)
+                clearScreen()
+            }
+        }
+        document.close()
+    }
+
+    fun processTXT (filePath: String, wpm: Int) {
+        val delay = getDelay(wpm)
         clearScreen()
 
         File(filePath).forEachLine {
@@ -41,13 +54,6 @@ class GrasperController: AbstractGrasperController {
                 sleep(delay)
                 clearScreen()
             }
-        }
-    }
-
-    fun setCodePage() {
-        val os = System.getProperty("os.name")
-        if (os.contains("Windows")) {
-            ProcessBuilder("cmd", "/c", "CHCP 65001").inheritIO().start().waitFor()
         }
     }
 
